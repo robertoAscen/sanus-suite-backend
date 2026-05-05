@@ -1,0 +1,33 @@
+---
+id: MONO_SANUS_SUITE
+info:
+  app:
+    encoding: "@project.build.sourceEncoding@"
+    java:
+      version: "@java.version@"
+    name: "@project.name@"
+    version: "@project.version@"
+spring:
+  mvc:
+    servlet:
+      path: /sanus-suite
+  profiles:
+    active:
+      - dev
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+springdoc:
+  default-produces-media-type: application/json
+  swagger-ui:
+    disable-swagger-default-url: true
+    path: /docs
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      base-path: /
+      path-mapping:
+        health: api/v1/monitor
