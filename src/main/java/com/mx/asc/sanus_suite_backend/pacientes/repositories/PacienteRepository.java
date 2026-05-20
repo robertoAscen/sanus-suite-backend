@@ -9,11 +9,15 @@ import java.util.Optional;
 
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
-  Paciente findByCurpAndTenantId(String curp, String tenantId);
+
 
   // Solo lista los pacientes que pertenecen a la clínica activa
   List<Paciente> findAllByTenantId(String tenantId);
 
   // Busca un paciente específico asegurándose de que pertenezca al médico que consulta
   Optional<Paciente> findByIdAndTenantId(Long id, String tenantId);
+
+  boolean existsByCurpAndTenantId(String curp, String tenantId);
+
+  boolean existsByIdAndTenantId(Long id, String tenentId);
 }
