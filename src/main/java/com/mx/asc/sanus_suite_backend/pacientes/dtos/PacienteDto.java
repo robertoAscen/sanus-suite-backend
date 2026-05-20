@@ -13,4 +13,9 @@ public class PacienteDto {
   private String curp;
   private String direccion;
   private String telefono;
+  // Datos de Emergencia (NOM-004)
+  private String contactoEmergenciaNombre;
+  private String contactoEmergenciaTelefono;
+  private String contactoEmergenciaParentesco;
+  private String numeroExpediente;
 }
