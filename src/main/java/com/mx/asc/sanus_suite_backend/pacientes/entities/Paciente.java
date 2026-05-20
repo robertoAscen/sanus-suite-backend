@@ -4,17 +4,21 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.sql.Types;
 import java.time.LocalDateTime;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "pacientes")
+@Table(name = "pacientes", uniqueConstraints = {
+  @UniqueConstraint(name = "uk_paciente_tenant", columnNames = {"curp", "tenant_id"})
+})
 @SQLDelete(sql = "UPDATE pacientes SET activo = false WHERE id = ?")
 @Where(clause = "activo = true")
 @Getter @Setter
@@ -53,8 +57,10 @@ public class Paciente {
   private String curp;
 
   private String direccion;
-
   private String telefono;
+  private String contactoEmergenciaNombre;
+  private String contactoEmergenciaTelefono;
+  private String contactoEmergenciaParentesco;
 
   @CreatedBy
   private String creadoPor;

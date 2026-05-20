@@ -9,6 +9,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.apache.logging.log4j.ThreadContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -188,5 +189,40 @@ public class ResponseEntityHandling {
       .build());
 
     return response;
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ResponseError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    String traceId = ThreadContext.get("id");
+
+    // 1. Extraemos la causa raíz más específica de la excepción de la DB
+    String causaRaiz = ex.getMostSpecificCause().getMessage();
+
+    // 2. Logueamos el error homologado con tu LoggerAscService
+    log.error(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[DataIntegrityViolationException] Error de unicidad en base de datos. Causa: %s", causaRaiz))
+      .build());
+
+    // 3. Definimos un mensaje amigable para la interfaz médica
+    String mensajeUsuario = "El registro no se pudo completar porque algunos datos clave ya existen en el sistema.";
+
+    if (causaRaiz.contains("numero_expediente")) {
+      mensajeUsuario = "El número de expediente generado ya se encuentra registrado para otra clínica. Ajuste las restricciones de unicidad.";
+    } else if (causaRaiz.contains("curp")) {
+      mensajeUsuario = "El paciente con esta CURP ya se encuentra registrado.";
+    }
+
+    // 4. Construimos el DTO ResponseError usando el Builder
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_400.getCodigo()) // O el string "400" directo según tus constantes
+      .mensaje(mensajeUsuario)
+      .folio(traceId)
+      .info(ex.getClass().getSimpleName())
+      .detalles(List.of(causaRaiz))
+      .build();
+
+    // 5. Retornamos la respuesta HTTP con un estado 400 (Bad Request)
+    return ResponseEntity.badRequest().body(errorBody);
   }
 }
