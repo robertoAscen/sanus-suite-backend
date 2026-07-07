@@ -42,4 +42,13 @@ public class ExceptionGenerica extends RuntimeException {
   public synchronized Throwable fillInStackTrace() {
     return this;
   }
+
+  public static ExceptionGenerica lanzar404(String traceId, String mensaje) {
+    return ExceptionGenerica.builder()
+      .folio(traceId)
+      .info(mensaje)
+      .detalles(List.of(mensaje)) // Aquí se automatiza el mapeo a la lista
+      .codigosRespuesta(CodigosResponse.CODIGO_404)
+      .build();
+  }
 }

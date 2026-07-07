@@ -6,24 +6,20 @@ import com.mx.asc.sanus_suite_backend.pacientes.dtos.PacienteDto;
 import com.mx.asc.sanus_suite_backend.pacientes.entities.Paciente;
 import com.mx.asc.sanus_suite_backend.pacientes.mappers.PacienteMapper;
 import com.mx.asc.sanus_suite_backend.pacientes.services.PacienteService;
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Component
 public class PacienteHandler {
 
   private final PacienteService pacienteService;
   private final ExpedienteService expedienteService;
   private final PacienteMapper pacienteMapper;
-
-  public PacienteHandler(PacienteService pacienteService, ExpedienteService expedienteService, PacienteMapper pacienteMapper){
-    this.pacienteService = pacienteService;
-    this.expedienteService = expedienteService;
-    this.pacienteMapper = pacienteMapper;
-  }
 
   @Transactional
   public PacienteDto altaPaciente(Paciente paciente, String tenantId){
@@ -32,7 +28,7 @@ public class PacienteHandler {
     return pacienteMapper.toDto(newPaciente, newExpediente);
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public List<PacienteDto> listaPacientes(String tenantId){
     List<Paciente> pacientes = pacienteService.listaPacientes(tenantId);
     return pacientes.stream()
