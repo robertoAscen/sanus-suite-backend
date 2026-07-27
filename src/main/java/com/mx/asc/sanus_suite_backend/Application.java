@@ -15,11 +15,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 public class Application {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+    // !!! ESTA ES LA LÍNEA MÁGICA QUE FALTA !!!
+    // Le dice a Log4j que propague el ThreadContext a sub-hilos de BD/Hibernate
+    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
+    SpringApplication.run(Application.class, args);
 	}
-
-  @Bean
-  public AuditorAware<String> auditorProvider() {
-    return new AuditorAwareImpl();
-  }
 }

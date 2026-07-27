@@ -2,37 +2,24 @@ package com.mx.asc.sanus_suite_backend.pacientes.services.impl;
 
 import com.mx.asc.log.bean.LogBean;
 import com.mx.asc.log.service.LoggerAscService;
-import com.mx.asc.sanus_suite_backend.expedientes.entities.Expediente;
-import com.mx.asc.sanus_suite_backend.expedientes.repositories.ExpedienteRepository;
-import com.mx.asc.sanus_suite_backend.expedientes.services.ExpedienteService;
-import com.mx.asc.sanus_suite_backend.pacientes.dtos.PacienteDto;
 import com.mx.asc.sanus_suite_backend.pacientes.entities.Paciente;
 import com.mx.asc.sanus_suite_backend.pacientes.repositories.PacienteRepository;
 import com.mx.asc.sanus_suite_backend.pacientes.services.PacienteService;
-import com.mx.asc.sanus_suite_backend.util.constants.Constantes;
 import com.mx.asc.sanus_suite_backend.util.enums.CodigosResponse;
 import com.mx.asc.sanus_suite_backend.util.exceptions.ExceptionGenerica;
-import com.mx.asc.sanus_suite_backend.util.responses.RespuestaApi;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.ThreadContext;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class PacienteServiceImpl implements PacienteService {
 
-  private PacienteRepository pacienteRepository;
-  private LoggerAscService log;
-
-  public PacienteServiceImpl(PacienteRepository pacienteRepository, LoggerAscService log) {
-    this.pacienteRepository = pacienteRepository;
-    this.log = log;
-  }
+  private final PacienteRepository pacienteRepository;
+  private final LoggerAscService log;
 
   @Override
   @Transactional
@@ -106,22 +93,21 @@ public class PacienteServiceImpl implements PacienteService {
   @Transactional
   public void bajaPaciente(Long id, String tenantId) {
     String traceId = ThreadContext.get("id");
-//    ResponseEntity<RespuestaApi> response;
     log.info(LogBean.builder()
       .clase(getClass())
       .message(String.format("[Iniciando metodo bajaPaciente] Id: %d | Tenant: %s", id, tenantId))
       .build());
-    if (!pacienteRepository.existsByIdAndTenantId(id, tenantId)) {
-      throw ExceptionGenerica.builder()
+    Paciente paciente = pacienteRepository.findByIdAndTenantId(id, tenantId)
+      .orElseThrow(() -> ExceptionGenerica.builder()
         .codigosRespuesta(CodigosResponse.CODIGO_404)
         .detalles(List.of("El paciente no existe o no pertenece a esta clínica"))
-        .build();
-    }
+        .build());
     log.info(LogBean.builder()
       .clase(getClass())
       .message("[Dando de baja el paciente....]")
       .build());
-    pacienteRepository.deleteById(id);
+    paciente.setActivo(false);
+    pacienteRepository.save(paciente);
     log.info(LogBean.builder()
       .clase(getClass())
       .message("[Baja del paciente exitosa]")

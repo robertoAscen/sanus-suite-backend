@@ -5,7 +5,7 @@ public class Constantes {
   public static final String V1 = "/v1";
   public static final String API = "/api";
   public static final String LISTAR_PACIENTES = "/listar-pacientes";
-  public static final String ALTA_PACIENTE = "/alta-paciente";
+  public static final String GUARDAR_PACIENTE = "/guardar-paciente";
   public static final String BAJA_PACIENTE = "/baja-paciente";
   public static final String ID = "/{id}";
   public static final String PACIENTES = "/pacientes";
@@ -23,6 +23,9 @@ public class Constantes {
   public static final String RECORD_NOT_FOUND = "informacion no encontrada";
 
   public static final String URL_ERROR = "https://sanus-developer.sanusmed.com.mx/errors#";
+
+  public static final String LOGIN = "/login";
+  public static final String AUTH = "/auth";
 
   public Constantes() {
     throw new RuntimeException(getClass().toString());
