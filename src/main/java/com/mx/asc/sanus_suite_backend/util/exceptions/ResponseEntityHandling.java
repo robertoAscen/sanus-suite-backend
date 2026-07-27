@@ -5,6 +5,7 @@ import com.mx.asc.log.service.LoggerAscService;
 import com.mx.asc.sanus_suite_backend.util.constants.Constantes;
 import com.mx.asc.sanus_suite_backend.util.enums.CodigosResponse;
 import com.mx.asc.sanus_suite_backend.util.responses.ResponseError;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.logging.log4j.ThreadContext;
 import org.springframework.core.Ordered;
@@ -12,7 +13,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -224,5 +228,88 @@ public class ResponseEntityHandling {
 
     // 5. Retornamos la respuesta HTTP con un estado 400 (Bad Request)
     return ResponseEntity.badRequest().body(errorBody);
+  }
+
+  @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
+  public ResponseEntity<ResponseError> handleAuthenticationExceptions(Exception ex) {
+    String traceId = ThreadContext.get("id"); // Recuperamos tu traceId del contexto
+
+    // Construimos la estructura exacta que espera tu arquitectura
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_401.getCodigo()) // <-- Asegúrate de mapear o usar el string "401"
+      .mensaje("Usuario o contraseña incorrectos. Por favor, verifique sus credenciales.")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#401")
+      .detalles(List.of(ex.getMessage())) // Guardará ["Bad credentials"] en los detalles para auditoría interna
+      .build();
+
+    // Logeamos como WARN porque es una acción errónea del cliente, no un bug de Sanus Suite
+    log.warn(LogBean.builder()
+      .clase(getClass())
+      .message("[Autenticación Fallida] Intento de login con credenciales inválidas.")
+      .data(errorBody)
+      .build());
+
+    // Retornamos un HTTP 401 (Unauthorized) en lugar del 500
+    return new ResponseEntity<>(errorBody, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ResponseError> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
+    // Obtenemos el traceId que estás manejando (puedes extraerlo de tu MDC o de los headers)
+    String traceId = ThreadContext.get("id");
+
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
+      .mensaje("Petición inválida o datos duplicados.")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    ResponseError errorDetalle = ResponseError.builder()
+      .codigo("400.MONO_SANUS_SUITE.BAD_REQUEST")
+      .mensaje("Petición inválida o datos duplicados.")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    log.warn(LogBean.builder()
+      .clase(getClass())
+      .message("[Registro de usuario fallido] datos duplicados")
+      .data(errorBody)
+      .build());
+
+    return new ResponseEntity<>(errorBody, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MissingPathVariableException.class)
+  public ResponseEntity<ResponseError> handleMissiongPathVariableException(MissingPathVariableException ex, HttpServletRequest request){
+    String traceId = ThreadContext.get("id");
+
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
+      .mensaje("Petición inválida.")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    ResponseError errorDetalle = ResponseError.builder()
+      .codigo("400.MONO_SANUS_SUITE.BAD_REQUEST")
+      .mensaje("Petición inválida")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    log.error(LogBean.builder()
+      .clase(getClass())
+      .message("Peticion invalida, revisar parametros")
+      .data(errorBody)
+      .build());
+
+    return new ResponseEntity<>(errorBody, HttpStatus.BAD_REQUEST);
   }
 }

@@ -22,3 +22,6 @@ spring:
 logging:
   level:
     org.hibernate.SQL: OFF
+sanus:
+  jwt:
+    secret: ClaveSecretaSuperSeguraParaSanusSuite2026*

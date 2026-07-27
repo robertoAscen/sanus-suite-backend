@@ -1,5 +1,6 @@
 package com.mx.asc.sanus_suite_backend.pacientes.entities;
 
+import com.mx.asc.sanus_suite_backend.util.entities.AuditableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -15,16 +16,15 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "pacientes", uniqueConstraints = {
   @UniqueConstraint(name = "uk_paciente_tenant", columnNames = {"curp", "tenant_id"})
 })
-@SQLDelete(sql = "UPDATE pacientes SET activo = false WHERE id = ?")
+//@SQLDelete(sql = "UPDATE pacientes SET activo = false WHERE id = ?")
 @Where(clause = "activo = true")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Paciente {
+public class Paciente extends AuditableEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,20 +62,8 @@ public class Paciente {
   private String contactoEmergenciaTelefono;
   private String contactoEmergenciaParentesco;
 
-  @CreatedBy
-  private String creadoPor;
-
-  @CreatedDate
-  @Column(updatable = false)
-  private LocalDateTime fechaCreacion;
-
   @Column(nullable = false)
   private boolean activo = true;
-
-  @PrePersist
-  protected void onCreate() {
-    this.fechaCreacion = LocalDateTime.now();
-  }
 
   @Override
   public String toString() {

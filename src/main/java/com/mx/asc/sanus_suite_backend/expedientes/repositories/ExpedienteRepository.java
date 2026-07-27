@@ -27,4 +27,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, Long> {
 
 
   Optional<Expediente> findByPacienteIdAndTenantId(Long pacienteId, String tenantId);
+
+  Optional<Expediente> findByNumeroExpedienteAndTenantId(String numeroExpediente, String tenantId);
 }
