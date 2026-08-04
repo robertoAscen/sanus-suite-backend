@@ -22,10 +22,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, Long> {
     @Param("fin") LocalDateTime fin
   );
 
-  @Query("SELECT e FROM Expediente e WHERE e.paciente.id = :pacienteId AND e.tenantId = :tenantId")
-  Optional<Expediente> buscarPorPacienteYTenant(@Param("pacienteId") Long pacienteId, @Param("tenantId") String tenantId);
-
-
   Optional<Expediente> findByPacienteIdAndTenantId(Long pacienteId, String tenantId);
 
   Optional<Expediente> findByNumeroExpedienteAndTenantId(String numeroExpediente, String tenantId);

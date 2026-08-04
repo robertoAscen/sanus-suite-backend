@@ -13,6 +13,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,29 +31,27 @@ import java.util.stream.Collectors;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class ResponseEntityHandling {
-  private final LoggerAscService log; // Nueva interfaz de la librería
 
-  // Inyección por constructor: más limpio y fácil de testear
+  private final LoggerAscService log;
+
   public ResponseEntityHandling(LoggerAscService log) {
     this.log = log;
   }
 
   @ExceptionHandler(ExceptionGenerica.class)
   public ResponseEntity<ResponseError> handleExceptionGenerica(ExceptionGenerica ex) {
-    // Usamos el traceId que ya viene en tu excepción
+
     String traceId = ThreadContext.get("id");
 
-    // Creamos el objeto de respuesta de error
     ResponseError error = ResponseError.builder()
       .codigo(ex.getCodigosRespuesta().getCodigo())
-      .mensaje(ex.getMensaje()) // Asegúrate que ExceptionGenerica tome el mensaje del Enum
+      .mensaje(ex.getMensaje())
       .folio(traceId)
       .info("https://sanus-developer.sanusmed.com.mx/errors#")
       .detalles(ex.getDetalles())
       .build();
 
-    // LOG CONTROLADO: En lugar de imprimir toda la excepción, solo loggeamos el mensaje relevante.
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("[Excepción de Negocio Controlada]")
       .data(error)
@@ -62,7 +62,9 @@ public class ResponseEntityHandling {
 
   @ExceptionHandler(Exception.class)
   public final ResponseEntity<ResponseError> handleAllException(Throwable ex) {
+
     String traceId = ThreadContext.get("id");
+
     ResponseEntity<ResponseError> response = new ResponseEntity<>(
       ResponseError.builder()
         .codigo(CodigosResponse.CODIGO_500.getCodigo())
@@ -86,9 +88,8 @@ public class ResponseEntityHandling {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ResponseError> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    String traceId = ThreadContext.get("id"); // Recuperamos el traceId del log4j2
+    String traceId = ThreadContext.get("id");
 
-    // Extraemos todos los errores de los campos (pueden ser varios)
     List<String> detalles = ex.getBindingResult()
       .getFieldErrors()
       .stream()
@@ -96,26 +97,27 @@ public class ResponseEntityHandling {
       .collect(Collectors.toList());
 
     ResponseError errorBody = ResponseError.builder()
-      .codigo(CodigosResponse.CODIGO_400.getCodigo()) // Usamos el código 400 (Bad Request)
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
       .mensaje("Error de validación en los campos enviados")
       .folio(traceId)
       .info("https://sanus-developer.sanusmed.com.mx/errors#")
       .detalles(detalles)
       .build();
 
-    // Logeamos como WARN porque es un error del cliente, no del servidor
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("[Error de Validación de Request]")
       .data(errorBody)
       .build());
 
-    return new ResponseEntity<>(errorBody, HttpStatus.BAD_REQUEST);
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_400.getHttpStatus());
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
   public ResponseEntity<ResponseError> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+
     String traceId = ThreadContext.get("id");
+
     String name = ex.getName();
     String type = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown";
     Object value = ex.getValue();
@@ -132,7 +134,7 @@ public class ResponseEntityHandling {
       HttpStatus.BAD_REQUEST
     );
 
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("Error de tipo de argumento")
       .data(response.getBody())
@@ -143,6 +145,7 @@ public class ResponseEntityHandling {
 
   @ExceptionHandler(MissingRequestHeaderException.class)
   public ResponseEntity<ResponseError> handleHeaders(MissingRequestHeaderException ex) {
+
     String traceId = ThreadContext.get("id");
     String name = ex.getHeaderName();
     List<String> detalles = List.of(String.format("El header '%s' es requerido", name));
@@ -158,7 +161,7 @@ public class ResponseEntityHandling {
       HttpStatus.BAD_REQUEST
     );
 
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("Header faltante en la petición: " + name)
       .data(response.getBody())
@@ -169,6 +172,7 @@ public class ResponseEntityHandling {
 
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<ResponseError> onConstraintValidationException(ConstraintViolationException e) {
+
     String traceId = ThreadContext.get("id");
     List<String> detalles = e.getConstraintViolations()
       .stream()
@@ -186,7 +190,7 @@ public class ResponseEntityHandling {
       HttpStatus.BAD_REQUEST
     );
 
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("Violación de restricciones de validación")
       .data(response.getBody())
@@ -197,18 +201,11 @@ public class ResponseEntityHandling {
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ResponseError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-    String traceId = ThreadContext.get("id");
 
-    // 1. Extraemos la causa raíz más específica de la excepción de la DB
+    String traceId = ThreadContext.get("id");
     String causaRaiz = ex.getMostSpecificCause().getMessage();
 
-    // 2. Logueamos el error homologado con tu LoggerAscService
-    log.error(LogBean.builder()
-      .clase(getClass())
-      .message(String.format("[DataIntegrityViolationException] Error de unicidad en base de datos. Causa: %s", causaRaiz))
-      .build());
 
-    // 3. Definimos un mensaje amigable para la interfaz médica
     String mensajeUsuario = "El registro no se pudo completar porque algunos datos clave ya existen en el sistema.";
 
     if (causaRaiz.contains("numero_expediente")) {
@@ -217,46 +214,46 @@ public class ResponseEntityHandling {
       mensajeUsuario = "El paciente con esta CURP ya se encuentra registrado.";
     }
 
-    // 4. Construimos el DTO ResponseError usando el Builder
     ResponseError errorBody = ResponseError.builder()
-      .codigo(CodigosResponse.CODIGO_400.getCodigo()) // O el string "400" directo según tus constantes
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
       .mensaje(mensajeUsuario)
       .folio(traceId)
       .info(ex.getClass().getSimpleName())
       .detalles(List.of(causaRaiz))
       .build();
 
-    // 5. Retornamos la respuesta HTTP con un estado 400 (Bad Request)
+    log.error(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[DataIntegrityViolationException] Error de unicidad en base de datos. Causa: %s", causaRaiz))
+      .build());
+
     return ResponseEntity.badRequest().body(errorBody);
   }
 
   @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
   public ResponseEntity<ResponseError> handleAuthenticationExceptions(Exception ex) {
-    String traceId = ThreadContext.get("id"); // Recuperamos tu traceId del contexto
+    String traceId = ThreadContext.get("id");
 
-    // Construimos la estructura exacta que espera tu arquitectura
     ResponseError errorBody = ResponseError.builder()
-      .codigo(CodigosResponse.CODIGO_401.getCodigo()) // <-- Asegúrate de mapear o usar el string "401"
+      .codigo(CodigosResponse.CODIGO_401.getCodigo())
       .mensaje("Usuario o contraseña incorrectos. Por favor, verifique sus credenciales.")
       .folio(traceId)
       .info("https://sanus-developer.sanusmed.com.mx/errors#401")
-      .detalles(List.of(ex.getMessage())) // Guardará ["Bad credentials"] en los detalles para auditoría interna
+      .detalles(List.of(ex.getMessage()))
       .build();
 
-    // Logeamos como WARN porque es una acción errónea del cliente, no un bug de Sanus Suite
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("[Autenticación Fallida] Intento de login con credenciales inválidas.")
       .data(errorBody)
       .build());
 
-    // Retornamos un HTTP 401 (Unauthorized) en lugar del 500
-    return new ResponseEntity<>(errorBody, HttpStatus.UNAUTHORIZED);
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_401.getHttpStatus());
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ResponseError> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
-    // Obtenemos el traceId que estás manejando (puedes extraerlo de tu MDC o de los headers)
+
     String traceId = ThreadContext.get("id");
 
     ResponseError errorBody = ResponseError.builder()
@@ -275,30 +272,22 @@ public class ResponseEntityHandling {
       .detalles(List.of(ex.getMessage()))
       .build();
 
-    log.warn(LogBean.builder()
+    log.error(LogBean.builder()
       .clase(getClass())
       .message("[Registro de usuario fallido] datos duplicados")
       .data(errorBody)
       .build());
 
-    return new ResponseEntity<>(errorBody, HttpStatus.BAD_REQUEST);
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_400.getHttpStatus());
   }
 
   @ExceptionHandler(MissingPathVariableException.class)
-  public ResponseEntity<ResponseError> handleMissiongPathVariableException(MissingPathVariableException ex, HttpServletRequest request){
+  public ResponseEntity<ResponseError> handleMissiongPathVariableException(MissingPathVariableException ex, HttpServletRequest request) {
     String traceId = ThreadContext.get("id");
 
     ResponseError errorBody = ResponseError.builder()
       .codigo(CodigosResponse.CODIGO_400.getCodigo())
       .mensaje("Petición inválida.")
-      .folio(traceId)
-      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
-      .detalles(List.of(ex.getMessage()))
-      .build();
-
-    ResponseError errorDetalle = ResponseError.builder()
-      .codigo("400.MONO_SANUS_SUITE.BAD_REQUEST")
-      .mensaje("Petición inválida")
       .folio(traceId)
       .info("https://sanus-developer.sanusmed.com.mx/errors#400")
       .detalles(List.of(ex.getMessage()))
@@ -310,6 +299,50 @@ public class ResponseEntityHandling {
       .data(errorBody)
       .build());
 
-    return new ResponseEntity<>(errorBody, HttpStatus.BAD_REQUEST);
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_400.getHttpStatus());
   }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ResponseError> handleNoResourceFoundException(NoResourceFoundException ex, HttpServletRequest request) {
+
+    String traceId = ThreadContext.get("id");
+
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
+      .mensaje("Petición inválida.")
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    log.error(LogBean.builder()
+      .clase(getClass())
+      .message("Peticion invalida, revisar parametros")
+      .data(errorBody)
+      .build());
+
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_400.getHttpStatus());
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ResponseError> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request){
+
+    String traceId = ThreadContext.get("id");
+
+    ResponseError errorBody = ResponseError.builder()
+      .codigo(CodigosResponse.CODIGO_400.getCodigo())
+      .folio(traceId)
+      .info("https://sanus-developer.sanusmed.com.mx/errors#400")
+      .detalles(List.of(ex.getMessage()))
+      .build();
+
+    log.error(LogBean.builder()
+        .clase(getClass())
+        .message("Peticion invalida, revisar parametros")
+        .data(errorBody)
+      .build());
+
+    return new ResponseEntity<>(errorBody, CodigosResponse.CODIGO_400.getHttpStatus());
+  }
+
 }

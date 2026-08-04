@@ -47,8 +47,17 @@ public class ExceptionGenerica extends RuntimeException {
     return ExceptionGenerica.builder()
       .folio(traceId)
       .info(mensaje)
-      .detalles(List.of(mensaje)) // Aquí se automatiza el mapeo a la lista
+      .detalles(List.of(mensaje))
       .codigosRespuesta(CodigosResponse.CODIGO_404)
+      .build();
+  }
+
+  public static ExceptionGenerica lanzar400(String traceId, String mensaje) {
+    return ExceptionGenerica.builder()
+      .folio(traceId)
+      .info(mensaje)
+      .detalles(List.of(mensaje))
+      .codigosRespuesta(CodigosResponse.CODIGO_400)
       .build();
   }
 }

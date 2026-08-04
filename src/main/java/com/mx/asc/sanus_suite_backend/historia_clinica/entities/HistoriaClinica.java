@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -33,24 +32,35 @@ public class HistoriaClinica extends AuditableEntity {
   @JoinColumn(name = "expediente_id", nullable = false)
   private Expediente expediente;
 
-  @Column(columnDefinition = "TEXT", nullable = false)
+  @Column(name = "motivo_consulta", columnDefinition = "TEXT")
+  private String motivoConsulta;
+
+  @Column(name = "padecimiento_actual", columnDefinition = "TEXT", nullable = false)
   private String padecimientoActual;
 
-  // Secciones embebidas para mantener el código ordenado en objetos Java
-  @Embedded
-  private AntecedentesHeredofamiliares antecedentesHeredofamiliares;
+  @Column(name = "antecedentes_heredofamiliares", columnDefinition = "TEXT")
+  private String antecedentesHeredofamiliares;
 
-  @Embedded
-  private AntecedentesPersonalesPatologicos antecedentesPersonalesPatologicos;
+  @Column(name = "antecedentes_patologicos", columnDefinition = "TEXT")
+  private String antecedentesPatologicos;
 
-  @Embedded
-  private AntecedentesPersonalesNoPatologicos antecedentesPersonalesNoPatologicos;
+  @Column(name = "antecedentes_no_patologicos", columnDefinition = "TEXT")
+  private String antecedentesNoPatologicos;
 
-  // Los antecedentes gineco-obstétricos podrían ser otra entidad o embebido opcional
-  @Embedded
-  private AntecedentesGinecoObstetricos antecedentesGinecoObstetricos;
+  @Column(name = "interrogatorio_aparatos_sistemas", columnDefinition = "TEXT")
+  private String interrogatorioAparatosSistemas;
 
-  // --- NUEVOS CAMPOS DE SEGURIDAD CLÍNICA ---
+  @Column(name = "exploracion_fisica", columnDefinition = "TEXT")
+  private String exploracionFisica;
+
+  @Column(name = "diagnostico", columnDefinition = "TEXT")
+  private String diagnostico;
+
+  @Column(name = "plan_tratamiento", columnDefinition = "TEXT")
+  private String planTratamiento;
+
+  // --- CAMPOS DE SEGURIDAD CLÍNICA / FIRMA ---
+
   @Column(nullable = false)
   private boolean firmado = false;
 
@@ -58,5 +68,11 @@ public class HistoriaClinica extends AuditableEntity {
   private LocalDateTime fechaFirma;
 
   @Column(name = "firmado_por_medico_id")
-  private Long firmadoPorMedicoId; // ID del médico que plasmó su firma digital
+  private Long firmadoPorMedicoId;
+
+  @Column(name = "medico_nombre_snapshot")
+  private String medicoNombreSnapshot;
+
+  @Column(name = "medico_cedula_snapshot")
+  private String medicoCedulaSnapshot;
 }
