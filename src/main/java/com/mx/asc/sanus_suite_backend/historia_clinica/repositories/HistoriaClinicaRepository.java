@@ -9,8 +9,7 @@ import java.util.Optional;
 @Repository
 public interface HistoriaClinicaRepository extends JpaRepository<HistoriaClinica, Long> {
 
-  // Recuperar la historia clínica de un expediente específico dentro del Tenant activo
-  Optional<HistoriaClinica> findByExpedienteIdAndTenantId(Long expedienteId, String tenantId);
-
   Optional<HistoriaClinica> findByExpedienteAndTenantId(Expediente expediente, String tenantId);
+  Optional<HistoriaClinica> findByIdAndTenantId(Long historiaClinicaId, String tenantId);
+  Optional<HistoriaClinica> findByExpedienteIdAndTenantId(Long expedienteId, String tenantId);
 }

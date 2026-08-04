@@ -85,6 +85,7 @@ public class AuthService {
 
     // 7. Retornamos el objeto estructurado con los datos vitales de sesión
     return AuthResponseDto.builder()
+      .id(userEntity.getId())
       .token(jwtToken)
       .username(userDetails.getUsername())
       .fullName(userEntity.getFullName())

@@ -4,12 +4,12 @@ public class Constantes {
 
   public static final String V1 = "/v1";
   public static final String API = "/api";
-  public static final String LISTAR_PACIENTES = "/listar-pacientes";
-  public static final String GUARDAR_PACIENTE = "/guardar-paciente";
-  public static final String BAJA_PACIENTE = "/baja-paciente";
+  public static final String LISTAR = "/listar";
+  public static final String GUARDAR = "/guardar";
+  public static final String BAJA= "/baja";
   public static final String ID = "/{id}";
   public static final String PACIENTES = "/pacientes";
-  public static final String UPDATE_PACIENTE = "/update-paciente";
+  public static final String UPDATE_PACIENTE = "/update";
 
   public static final String SISTEMA = "MONO_SANUS_SUITE";
   public static final String SUCCESS_OPERATION = "Operación Exitosa";
@@ -26,6 +26,14 @@ public class Constantes {
 
   public static final String LOGIN = "/login";
   public static final String AUTH = "/auth";
+
+  public static final String HISTORIAS_CLINICAS = "/historias-clinicas";
+  public static final String EXPEDIENTE = "/expediente";
+  public static final String NUMERO_EXPEDIENTE = "/{numeroExpediente}";
+  public static final String FIRMAR = "/firmar";
+  public static final String HEADER_X_TENANT_ID = "x-tenant-id";
+  public static final String HEADER_X_USUARIO_ID = "x-usuario-id";
+
 
   public Constantes() {
     throw new RuntimeException(getClass().toString());

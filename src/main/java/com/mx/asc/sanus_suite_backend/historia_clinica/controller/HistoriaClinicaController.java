@@ -1,51 +1,67 @@
 package com.mx.asc.sanus_suite_backend.historia_clinica.controller;
 
 import com.mx.asc.sanus_suite_backend.handlers.HistoriaClinicaHandler;
-import com.mx.asc.sanus_suite_backend.historia_clinica.entities.HistoriaClinica;
-import com.mx.asc.sanus_suite_backend.historia_clinica.services.HistoriaClinicaService;
+import com.mx.asc.sanus_suite_backend.historia_clinica.dtos.HistoriaClinicaRequestDto;
+import com.mx.asc.sanus_suite_backend.historia_clinica.dtos.HistoriaClinicaResponseDto;
+import com.mx.asc.sanus_suite_backend.util.constants.Constantes;
+import com.mx.asc.sanus_suite_backend.util.enums.CodigosResponse;
 import com.mx.asc.sanus_suite_backend.util.responses.RespuestaApi;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.ThreadContext;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
 @RestController
-@RequestMapping("/historias-clinicas/api/v1")
+@RequestMapping(Constantes.HISTORIAS_CLINICAS + Constantes.API + Constantes.V1)
+@RequiredArgsConstructor
 public class HistoriaClinicaController {
 
-  private final HistoriaClinicaService service;
   private final HistoriaClinicaHandler historiaClinicaHandler;
 
-  @GetMapping("/expediente/{numeroExpediente}")
-  public ResponseEntity<RespuestaApi> obtenerPorExpediente(
-    @PathVariable String numeroExpediente, @RequestHeader("x-tenant-id") String tenantId) {
+  @PostMapping(Constantes.GUARDAR)
+  public ResponseEntity<RespuestaApi<HistoriaClinicaResponseDto>> guardar(
+    @Valid @RequestBody HistoriaClinicaRequestDto requestDto,
+    @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
+
     String traceId = ThreadContext.get("id");
-    HistoriaClinica hc = historiaClinicaHandler.obtenerHistoriaClinicaPorExpedienteYTenantId(numeroExpediente, tenantId);
-    return buildResponse(traceId, "Operación exitosa", hc, HttpStatus.OK);
+    HistoriaClinicaResponseDto resultado = historiaClinicaHandler.guardarOActualizar(requestDto, tenantId);
+    return RespuestaApi.buildResponse(
+      traceId,
+      "Historia clínica guardada exitosamente",
+      resultado,
+      CodigosResponse.CODIGO_200
+    );
   }
 
-  @PostMapping("/guardar")
-  public ResponseEntity<RespuestaApi> guardarOActualizar(
-    @RequestBody HistoriaClinica historia, @RequestHeader("x-tenant-id") String tenantId) {
+  @GetMapping(Constantes.EXPEDIENTE + Constantes.NUMERO_EXPEDIENTE)
+  public ResponseEntity<RespuestaApi<HistoriaClinicaResponseDto>> obtenerPorExpediente(
+    @PathVariable String numeroExpediente,
+    @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
+
     String traceId = ThreadContext.get("id");
-    HistoriaClinica guardada = service.guardarOActualizar(historia, tenantId);
-    return buildResponse(traceId, "Historia clínica guardada correctamente", guardada, HttpStatus.CREATED);
+    HistoriaClinicaResponseDto resultado = historiaClinicaHandler.obtenerPorNumeroExpediente(numeroExpediente, tenantId);
+    return RespuestaApi.buildResponse(
+      traceId,
+      "Historia clínica recuperada con éxito",
+      resultado,
+      CodigosResponse.CODIGO_200
+    );
   }
 
-  @PutMapping("/firmar/{id}/medico/{medicoId}")
-  public ResponseEntity<RespuestaApi> firmarDocumento(
-    @PathVariable Long id, @PathVariable Long medicoId, @RequestHeader("x-tenant-id") String tenantId) {
-    String traceId = ThreadContext.get("id");
-    HistoriaClinica firmada = service.firmarHistoriaClinica(id, medicoId, tenantId);
-    return buildResponse(traceId, "Documento clínico firmado y bloqueado con éxito", firmada, HttpStatus.OK);
-  }
+  @PostMapping(Constantes.FIRMAR + Constantes.ID)
+  public ResponseEntity<RespuestaApi<HistoriaClinicaResponseDto>> firmar(
+    @PathVariable Long id,
+    @RequestHeader(Constantes.HEADER_X_USUARIO_ID) Long usuarioId,
+    @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
 
-  private ResponseEntity<RespuestaApi> buildResponse(String folio, String mensaje, Object resultado, HttpStatus status) {
-    return new ResponseEntity<>(
-      RespuestaApi.builder().folio(folio).mensaje(mensaje).resultado(resultado).build(),
-      status
+    String traceId = ThreadContext.get("id");
+    HistoriaClinicaResponseDto resultado = historiaClinicaHandler.firmarHistoriaClinica(id,usuarioId, tenantId);
+    return RespuestaApi.buildResponse(
+      traceId,
+      "Historia clinica firmada con éxito",
+      resultado,
+      CodigosResponse.CODIGO_200
     );
   }
 }

@@ -8,7 +8,6 @@ import com.mx.asc.sanus_suite_backend.util.responses.RespuestaApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.ThreadContext;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,21 +20,21 @@ public class PacienteController {
 
   private final PacienteHandler pacienteHandler;
 
-  @PostMapping(Constantes.GUARDAR_PACIENTE)
-  public ResponseEntity<RespuestaApi<PacienteDto>> guardarPaciente(
-    @RequestBody @Valid Paciente paciente, @RequestHeader("x-tenant-id") String tenantId) {
+  @PostMapping(Constantes.GUARDAR)
+  public ResponseEntity<RespuestaApi<PacienteDto>> guardar(
+    @RequestBody @Valid Paciente paciente, @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
     String traceId = ThreadContext.get("id");
     return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, pacienteHandler.altaPaciente(paciente, tenantId), CodigosResponse.CODIGO_201);
   }
 
-  @GetMapping(Constantes.LISTAR_PACIENTES)
-  public ResponseEntity<RespuestaApi<List<PacienteDto>>> listarPacientes(@RequestHeader("x-tenant-id") String tenantId) {
+  @GetMapping(Constantes.LISTAR)
+  public ResponseEntity<RespuestaApi<List<PacienteDto>>> listar(@RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
     String traceId = ThreadContext.get("id");
     return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, pacienteHandler.listaPacientes(tenantId), CodigosResponse.CODIGO_200);
   }
 
-  @DeleteMapping(Constantes.BAJA_PACIENTE+Constantes.ID)
-  public  ResponseEntity<RespuestaApi<Void>> darDeBaja(@PathVariable Long id, @RequestHeader("x-tenant-id") String tenantId){
+  @DeleteMapping(Constantes.BAJA + Constantes.ID)
+  public  ResponseEntity<RespuestaApi<Void>> Baja(@PathVariable Long id, @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId){
     String traceId = ThreadContext.get("id");
     pacienteHandler.bajaLogicaPaciente(id, tenantId);
     return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, null, CodigosResponse.CODIGO_200);
