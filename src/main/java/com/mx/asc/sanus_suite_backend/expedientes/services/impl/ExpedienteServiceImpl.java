@@ -58,13 +58,14 @@ public class ExpedienteServiceImpl implements ExpedienteService {
   }
 
   @Override
-  public Optional<Expediente> findByPacienteIdAndTenantId(Long pacienteId, String tenantId) {
+  public Expediente findByPacienteIdAndTenantId(Long pacienteId, String tenantId) {
     String traceId = ThreadContext.get("id");
     log.info(LogBean.builder()
       .clase(getClass())
       .message(String.format("[Buscando expediente por PacienteId: %d y Tenant: %s]", pacienteId, tenantId))
       .build());
-    return expedienteRepository.findByPacienteIdAndTenantId(pacienteId, tenantId);
+    return expedienteRepository.findByPacienteIdAndTenantId(pacienteId, tenantId).orElseThrow(
+      () -> ExceptionGenerica.lanzar404(traceId, "No se encontro expediente con esos datos"));
   }
 
   @Override
