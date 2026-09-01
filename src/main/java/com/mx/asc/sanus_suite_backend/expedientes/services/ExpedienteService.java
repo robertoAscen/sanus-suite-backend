@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface ExpedienteService {
   Expediente crearExpedienteBase(Paciente paciente, String tenantId);
-  Optional<Expediente> findByPacienteIdAndTenantId(Long pacienteId, String tenantId);
+  Expediente findByPacienteIdAndTenantId(Long pacienteId, String tenantId);
   Expediente findByNumeroExpedienteAndTenantId(String numeroExpediente, String tenantId);
 }

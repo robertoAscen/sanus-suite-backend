@@ -125,4 +125,26 @@ public class PacienteServiceImpl implements PacienteService {
       .message("[Baja del paciente exitosa]")
       .build());
   }
+
+  @Override
+  public Paciente obtenerPacientePorIdAndTenantId(Long id, String tenantId) {
+
+    String traceId = ThreadContext.get("id");
+
+    log.info(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[Iniciando metodo obtener paciente por id] Id: %d | Tenant: %s", id, tenantId))
+      .build());
+
+    Paciente paciente = pacienteRepository.findByIdAndTenantId(id, tenantId).orElseThrow(
+      () -> ExceptionGenerica.lanzar404(traceId, "El paciente no existe o no pertenece a esta clinica")
+      );
+
+    log.info(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[Paciente encontrado ] Paciente: %s", paciente))
+      .build());
+
+    return paciente;
+  }
 }

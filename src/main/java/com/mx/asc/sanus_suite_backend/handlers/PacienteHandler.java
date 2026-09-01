@@ -34,8 +34,7 @@ public class PacienteHandler {
     return pacientes.stream()
       .map(paciente -> {
         // Buscamos el expediente de manera opcional
-        Expediente expediente = expedienteService.findByPacienteIdAndTenantId(paciente.getId(), tenantId)
-          .orElse(null);
+        Expediente expediente = expedienteService.findByPacienteIdAndTenantId(paciente.getId(), tenantId);
         // Mapeamos usando el componente especializado
         return pacienteMapper.toDto(paciente, expediente);
       })
