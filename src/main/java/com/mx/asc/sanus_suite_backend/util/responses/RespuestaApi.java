@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 @Data
@@ -26,5 +28,18 @@ public class RespuestaApi<T> {
       .resultado(resultado)
       .build();
     return new ResponseEntity<>(body, codigosResponse.getHttpStatus());
+  }
+
+  public static <T> ResponseEntity<T> buildFileResponse(
+    T resource,
+    String nombreArchivo,
+    MediaType mediaType,
+    CodigosResponse codigosResponse) {
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(mediaType);
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + nombreArchivo + "\"");
+
+    return new ResponseEntity<>(resource, headers, codigosResponse.getHttpStatus());
   }
 }
