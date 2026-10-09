@@ -45,4 +45,18 @@ public class PacienteHandler {
   public void bajaLogicaPaciente(Long id, String tenantId){
     pacienteService.bajaPaciente(id, tenantId);
   }
+
+  @Transactional(readOnly = true)
+  public PacienteDto obtenerPacientePorId(Long id, String tenantId) {
+    Paciente paciente = pacienteService.obtenerPacientePorIdAndTenantId(id, tenantId);
+    Expediente expediente = expedienteService.findByPacienteIdAndTenantId(paciente.getId(), tenantId);
+    return pacienteMapper.toDto(paciente, expediente);
+  }
+
+  @Transactional
+  public PacienteDto actualizarPaciente(Long id, Paciente paciente, String tenantId) {
+    Paciente pacienteActualizado = pacienteService.actualizarPaciente(id, paciente, tenantId);
+    Expediente expediente = expedienteService.findByPacienteIdAndTenantId(pacienteActualizado.getId(), tenantId);
+    return pacienteMapper.toDto(pacienteActualizado, expediente);
+  }
 }
