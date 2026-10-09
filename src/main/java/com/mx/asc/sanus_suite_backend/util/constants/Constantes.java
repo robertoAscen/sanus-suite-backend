@@ -7,6 +7,8 @@ public class Constantes {
   public static final String LISTAR = "/listar";
   public static final String GUARDAR = "/guardar";
   public static final String BAJA= "/baja";
+  public static final String OBTENER= "/obtener";
+  public static final String ACTUALIZAR= "/actualizar";
   public static final String ID = "/{id}";
   public static final String PACIENTES = "/pacientes";
   public static final String UPDATE_PACIENTE = "/update";

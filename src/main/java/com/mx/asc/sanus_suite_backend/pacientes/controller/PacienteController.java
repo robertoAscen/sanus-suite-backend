@@ -39,4 +39,21 @@ public class PacienteController {
     pacienteHandler.bajaLogicaPaciente(id, tenantId);
     return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, null, CodigosResponse.CODIGO_200);
   }
+
+  @GetMapping(Constantes.OBTENER + Constantes.ID)
+  public ResponseEntity<RespuestaApi<PacienteDto>> obtenerPorId(
+    @PathVariable Long id,
+    @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
+    String traceId = ThreadContext.get("id");
+    return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, pacienteHandler.obtenerPacientePorId(id, tenantId), CodigosResponse.CODIGO_200);
+  }
+
+  @PutMapping(Constantes.ACTUALIZAR + Constantes.ID)
+  public ResponseEntity<RespuestaApi<PacienteDto>> actualizar(
+    @PathVariable Long id,
+    @RequestBody @Valid Paciente paciente,
+    @RequestHeader(Constantes.HEADER_X_TENANT_ID) String tenantId) {
+    String traceId = ThreadContext.get("id");
+    return RespuestaApi.buildResponse(traceId, Constantes.SUCCESS_OPERATION, pacienteHandler.actualizarPaciente(id, paciente, tenantId), CodigosResponse.CODIGO_200);
+  }
 }

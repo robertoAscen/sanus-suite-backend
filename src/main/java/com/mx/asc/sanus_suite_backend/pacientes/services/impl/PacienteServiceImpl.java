@@ -147,4 +147,36 @@ public class PacienteServiceImpl implements PacienteService {
 
     return paciente;
   }
+
+  @Override
+  @Transactional
+  public Paciente actualizarPaciente(Long id, Paciente pacienteActualizado, String tenantId) {
+    String traceId = ThreadContext.get("id");
+
+    log.info(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[Iniciando metodo actualizarPaciente] Id: %d | Tenant: %s", id, tenantId))
+      .build());
+
+    // 1. Verificar existencia
+    Paciente pacienteExistente = pacienteRepository.findByIdAndTenantId(id, tenantId)
+      .orElseThrow(() -> ExceptionGenerica.lanzar404(traceId, "El paciente no existe o no pertenece a esta clínica"));
+
+    // 2. Actualizar únicamente campos de contacto y emergencia (NOM-004-SSA3-2012)
+    pacienteExistente.setTelefono(pacienteActualizado.getTelefono());
+    pacienteExistente.setDireccion(pacienteActualizado.getDireccion());
+    pacienteExistente.setContactoEmergenciaNombre(pacienteActualizado.getContactoEmergenciaNombre());
+    pacienteExistente.setContactoEmergenciaTelefono(pacienteActualizado.getContactoEmergenciaTelefono());
+    pacienteExistente.setContactoEmergenciaParentesco(pacienteActualizado.getContactoEmergenciaParentesco());
+
+    // 3. Guardar cambios
+    Paciente pacienteGuardado = pacienteRepository.save(pacienteExistente);
+
+    log.info(LogBean.builder()
+      .clase(getClass())
+      .message(String.format("[Paciente actualizado exitosamente] - %s", pacienteGuardado))
+      .build());
+
+    return pacienteGuardado;
+  }
 }
