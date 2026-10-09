@@ -12,4 +12,5 @@ public interface PacienteService {
   List<Paciente> listaPacientes(String tenantId);
   void bajaPaciente(Long id, String tenantId);
   Paciente obtenerPacientePorIdAndTenantId(Long id, String tenantId);
+  Paciente actualizarPaciente(Long id, Paciente pacienteActualizado, String tenantId);
 }
