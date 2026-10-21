@@ -32,6 +32,8 @@ public class NotaEvolucionResponseDto implements Serializable {
   private String analisis;
   private String planTratamiento;
 
+  private Long recetaId;
+
   // Signos Vitales
   private String presionArterial;
   private Integer frecuenciaCardiaca;
