@@ -12,6 +12,7 @@ public class RecetaMedicaResponseDto {
 
   private Long id;
   private Long expedienteId;
+  private String pacienteNombre;
   private Long notaEvolucionId;
   private Long pacienteId;
   private Long medicoId;

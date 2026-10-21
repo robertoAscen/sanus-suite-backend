@@ -1,6 +1,7 @@
 package com.mx.asc.sanus_suite_backend.receta_medica.mappers;
 
 import com.mx.asc.sanus_suite_backend.medicos.entities.Medico;
+import com.mx.asc.sanus_suite_backend.pacientes.entities.Paciente;
 import com.mx.asc.sanus_suite_backend.receta_medica.dtos.RecetaDetalleRequestDto;
 import com.mx.asc.sanus_suite_backend.receta_medica.dtos.RecetaDetalleResponseDto;
 import com.mx.asc.sanus_suite_backend.receta_medica.dtos.RecetaMedicaRequestDto;
@@ -39,8 +40,12 @@ public interface RecetaMedicaMapper {
   // Transformar Entidad a ResponseDto especificando explícitamente el origen de "id" y "medicoId"
   @Mapping(target = "id", source = "entity.id")
   @Mapping(target = "medicoId", source = "medico.id")
+  @Mapping(
+    target = "pacienteNombre",
+    expression = "java(formatearNombreCompleto(paciente != null ? paciente.getNombre() : null, paciente != null ? paciente.getApellidoPaterno() : null, paciente != null ? paciente.getApellidoMaterno() : null))"
+  )
   @Mapping(target = "medicamentos", source = "entity.detalles")
-  RecetaMedicaResponseDto toResponseDto(RecetaMedica entity, Medico medico);
+  RecetaMedicaResponseDto toResponseDto(RecetaMedica entity, Medico medico, Paciente paciente);
 
   // Transformar detalle Entidad a ResponseDto
   RecetaDetalleResponseDto toDetalleResponseDto(RecetaDetalle entity);
@@ -48,4 +53,13 @@ public interface RecetaMedicaMapper {
   List<RecetaDetalle> toDetalleEntityList(List<RecetaDetalleRequestDto> dtos);
 
   List<RecetaDetalleResponseDto> toDetalleResponseDtoList(List<RecetaDetalle> entities);
+
+  // Helper reusable para formatear nombres sin nulls ni espacios extra
+  default String formatearNombreCompleto(String nombre, String primerApellido, String segundoApellido) {
+    StringBuilder sb = new StringBuilder();
+    if (nombre != null) sb.append(nombre.trim());
+    if (primerApellido != null) sb.append(" ").append(primerApellido.trim());
+    if (segundoApellido != null) sb.append(" ").append(segundoApellido.trim());
+    return !sb.isEmpty() ? sb.toString() : null;
+  }
 }

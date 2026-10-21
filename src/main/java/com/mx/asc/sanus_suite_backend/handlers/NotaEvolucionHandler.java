@@ -14,6 +14,7 @@ import com.mx.asc.sanus_suite_backend.nota_evolucion.mappers.NotaEvolucionMapper
 import com.mx.asc.sanus_suite_backend.nota_evolucion.services.NotaEvolucionService;
 import com.mx.asc.sanus_suite_backend.pacientes.entities.Paciente;
 import com.mx.asc.sanus_suite_backend.pacientes.services.PacienteService;
+import com.mx.asc.sanus_suite_backend.receta_medica.repositories.RecetaMedicaRepository;
 import com.mx.asc.sanus_suite_backend.util.exceptions.ExceptionGenerica;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.ThreadContext;
@@ -31,6 +32,7 @@ public class NotaEvolucionHandler {
   private final HistoriaClinicaService historiaClinicaService;
   private final NotaEvolucionMapper notaEvolucionMapper;
   private final PacienteService pacienteService;
+  private final RecetaMedicaRepository recetaMedicaRepository;
 
 
   public void guardarOActualizar(NotaEvolucionRequestDto dto, String tenantId, Long usuarioId) {
@@ -50,8 +52,17 @@ public class NotaEvolucionHandler {
     Expediente expediente = expedienteService.findByNumeroExpedienteAndTenantId(numExpediente, tenantId);
     Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
     List<NotaEvolucion> notasEvolucion = notaEvolucionService.obtenerHistoricoPorExpedienteId(expediente.getId(), tenantId);
+
     return notasEvolucion.stream()
-      .map(nota -> notaEvolucionMapper.toResponseDto(nota, expediente, expediente.getPaciente(), medico))
+      .map(nota -> {
+        NotaEvolucionResponseDto dto = notaEvolucionMapper.toResponseDto(nota, expediente, expediente.getPaciente(), medico);
+
+        // Buscar si esta nota ya tiene una receta generada
+        recetaMedicaRepository.findByNotaEvolucionIdAndTenantId(nota.getId(), tenantId)
+          .ifPresent(receta -> dto.setRecetaId(receta.getId()));
+
+        return dto;
+      })
       .toList();
   }
 
@@ -83,7 +94,14 @@ public class NotaEvolucionHandler {
     Paciente paciente = pacienteService.obtenerPacientePorIdAndTenantId(notaEvolucion.getPacienteId(), tenantId);
     Expediente expediente = expedienteService.findByPacienteIdAndTenantId(notaEvolucion.getPacienteId(), tenantId);
     Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
-    return notaEvolucionMapper.toResponseDto(notaEvolucion, expediente, paciente, medico);
+
+    NotaEvolucionResponseDto dto = notaEvolucionMapper.toResponseDto(notaEvolucion, expediente, paciente, medico);
+
+    // Buscar si esta nota ya tiene una receta generada
+    recetaMedicaRepository.findByNotaEvolucionIdAndTenantId(notaEvolucion.getId(), tenantId)
+      .ifPresent(receta -> dto.setRecetaId(receta.getId()));
+
+    return dto;
   }
 
   private void procesarFirmaSiEsRequerido(Boolean firmado, NotaEvolucion entity, Medico medico, String tenantId) {
