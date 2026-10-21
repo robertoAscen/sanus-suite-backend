@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -50,5 +51,15 @@ public class RecetaMedicaServiceImpl implements RecetaMedicaService {
   public void firmarReceta(Medico medico, RecetaMedica entity, String tenantId) {
     if (entity == null || medico == null) return;
     entity.asentarFirmaLegal(medico);
+  }
+
+  @Override
+  public List<RecetaMedica> obtenerPorExpedienteId(Long expedienteId, String tenantId) {
+    return repository.findByExpedienteIdAndTenantIdOrderByFechaEmisionDesc(expedienteId, tenantId);
+  }
+
+  @Override
+  public List<RecetaMedica> listarTodas(String tenantId) {
+    return repository.findByTenantIdOrderByFechaEmisionDesc(tenantId);
   }
 }

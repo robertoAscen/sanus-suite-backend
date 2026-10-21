@@ -15,4 +15,6 @@ public interface RecetaMedicaRepository extends CrudRepository<RecetaMedica, Lon
   List<RecetaMedica> findByPacienteIdAndTenantIdOrderByFechaEmisionDesc(Long pacienteId, String tenantId);
 
   List<RecetaMedica> findByExpedienteIdAndTenantIdOrderByFechaEmisionDesc(Long expedienteId, String tenantId);
+  List<RecetaMedica> findByTenantIdOrderByFechaEmisionDesc(String tenantId);
+  Optional<RecetaMedica> findByNotaEvolucionIdAndTenantId(Long notaEvolucionId, String tenantId);
 }

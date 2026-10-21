@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 @RestController
 @RequestMapping("/recetas/api/v1")
@@ -76,6 +77,39 @@ public class RecetaMedicaController {
       resource,
       nombreArchivo,
       MediaType.APPLICATION_PDF,
+      CodigosResponse.CODIGO_200
+    );
+  }
+
+  @GetMapping("/expediente/{numExpediente}")
+  public ResponseEntity<RespuestaApi<List<RecetaMedicaResponseDto>>> obtenerPorExpediente(
+    @PathVariable String numExpediente,
+    @RequestHeader("x-tenant-id") String tenantId,
+    @RequestHeader("x-usuario-id") Long usuarioId) {
+
+    String traceId = ThreadContext.get("id");
+    List<RecetaMedicaResponseDto> recetas = recetaMedicaHandler.obtenerPorNumeroExpediente(numExpediente, tenantId, usuarioId);
+
+    return RespuestaApi.buildResponse(
+      traceId,
+      "Recetas médicas del expediente: " + numExpediente,
+      recetas,
+      CodigosResponse.CODIGO_200
+    );
+  }
+
+  @GetMapping("/listar")
+  public ResponseEntity<RespuestaApi<List<RecetaMedicaResponseDto>>> listarTodas(
+    @RequestHeader("x-tenant-id") String tenantId,
+    @RequestHeader("x-usuario-id") Long usuarioId) {
+
+    String traceId = ThreadContext.get("id");
+    List<RecetaMedicaResponseDto> recetas = recetaMedicaHandler.listarTodas(tenantId, usuarioId);
+
+    return RespuestaApi.buildResponse(
+      traceId,
+      Constantes.SUCCESS_OPERATION,
+      recetas,
       CodigosResponse.CODIGO_200
     );
   }

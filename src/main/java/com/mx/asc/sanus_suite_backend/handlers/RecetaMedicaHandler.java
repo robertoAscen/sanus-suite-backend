@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -46,8 +47,9 @@ public class RecetaMedicaHandler {
 
   public RecetaMedicaResponseDto obtenerPorId(Long id, String tenantId, Long usuarioId) {
     RecetaMedica receta = recetaMedicaService.obtenerPorIdYTenantId(id, tenantId);
+    Paciente paciente = pacienteService.obtenerPacientePorIdAndTenantId(receta.getPacienteId(), tenantId);
     Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
-    return recetaMedicaMapper.toResponseDto(receta, medico);
+    return recetaMedicaMapper.toResponseDto(receta, medico, paciente);
   }
 
   public ByteArrayInputStream generarPdfReceta(Long recetaId, String tenantId, Long usuarioId) {
@@ -56,5 +58,28 @@ public class RecetaMedicaHandler {
     Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
 
     return recetaPdfService.generarPdfReceta(receta, paciente, medico);
+  }
+
+  public List<RecetaMedicaResponseDto> obtenerPorNumeroExpediente(String numExpediente, String tenantId, Long usuarioId) {
+    Expediente expediente = expedienteService.findByNumeroExpedienteAndTenantId(numExpediente, tenantId);
+    Paciente paciente = pacienteService.obtenerPacientePorIdAndTenantId(expediente.getPaciente().getId(), tenantId);
+    Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
+    List<RecetaMedica> recetas = recetaMedicaService.obtenerPorExpedienteId(expediente.getId(), tenantId);
+
+    return recetas.stream()
+      .map(receta -> recetaMedicaMapper.toResponseDto(receta, medico, paciente))
+      .toList();
+  }
+
+  public List<RecetaMedicaResponseDto> listarTodas(String tenantId, Long usuarioId) {
+    Medico medico = medicoService.obtenerPorUserId(usuarioId, tenantId);
+    List<RecetaMedica> recetas = recetaMedicaService.listarTodas(tenantId);
+
+    return recetas.stream()
+      .map(receta -> {
+        Paciente paciente = pacienteService.obtenerPacientePorIdAndTenantId(receta.getPacienteId(), tenantId);
+        return recetaMedicaMapper.toResponseDto(receta, medico, paciente);
+      })
+      .toList();
   }
 }
