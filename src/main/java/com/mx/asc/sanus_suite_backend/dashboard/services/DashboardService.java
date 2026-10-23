@@ -1,6 +1,7 @@
 package com.mx.asc.sanus_suite_backend.dashboard.services;
 
 import com.mx.asc.sanus_suite_backend.dashboard.dtos.DashboardResponseDto;
+import com.mx.asc.sanus_suite_backend.facturacion.repositories.FacturaRepository;
 import com.mx.asc.sanus_suite_backend.handlers.PacienteHandler;
 import com.mx.asc.sanus_suite_backend.inventario.repositories.ProductoRepository;
 import com.mx.asc.sanus_suite_backend.pacientes.dtos.PacienteDto;
@@ -15,9 +16,8 @@ public class DashboardService {
   @Autowired
   private PacienteHandler pacienteHandler;
 
-  // TODO: Descomentar cuando hagas merge del módulo de facturas desde tu equipo de escritorio
-  // @Autowired
-  // private FacturaRepository facturaRepository;
+  @Autowired
+  private FacturaRepository facturaRepository;
 
   @Autowired
   private ProductoRepository productoRepository;
@@ -34,9 +34,21 @@ public class DashboardService {
       totalPacientes = 0;
     }
 
-    // 2. Facturas (Valores temporales en 0 hasta mergear con tu laptop/escritorio)
+    // 2. Obtener total de facturas e ingresos reales
     long totalFacturas = 0;
     double ingresosTotales = 0.0;
+    try {
+      var facturasList = facturaRepository.findByTenantId(tenantId);
+      if (facturasList != null) {
+        totalFacturas = facturasList.size();
+        ingresosTotales = facturasList.stream()
+          .mapToDouble(f -> f.getTotal() != null ? f.getTotal() : 0.0)
+          .sum();
+      }
+    } catch (Exception e) {
+      totalFacturas = 0;
+      ingresosTotales = 0.0;
+    }
 
     // 3. Productos con stock bajo
     long stockBajo = 0;
